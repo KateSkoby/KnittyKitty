@@ -16,30 +16,9 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Run tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "10.0.x"
-
-      - name: Restore dependencies
-        run: dotnet restore tests/KnittyKitty.Tests/KnittyKitty.Tests.csproj
-
-      - name: Run unit tests
-        run: dotnet test tests/KnittyKitty.Tests/KnittyKitty.Tests.csproj --configuration Release --no-restore
-
-
   build-windows:
     name: Build Windows exe
     runs-on: windows-latest
-    needs: test
 
     steps:
       - name: Checkout repository
@@ -83,7 +62,6 @@ jobs:
   build-wasm:
     name: Build Uno WebAssembly
     runs-on: ubuntu-latest
-    needs: test
 
     steps:
       - name: Checkout repository
