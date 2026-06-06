@@ -59,7 +59,7 @@ jobs:
           path: dist/KnittyKitty-Windows-x64.zip
 
 
-    build-wasm:
+  build-wasm:
     name: Build Uno WebAssembly
     runs-on: windows-latest
 
