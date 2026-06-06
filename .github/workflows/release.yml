@@ -59,9 +59,9 @@ jobs:
           path: dist/KnittyKitty-Windows-x64.zip
 
 
-  build-wasm:
+    build-wasm:
     name: Build Uno WebAssembly
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repository
@@ -73,43 +73,61 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Install WebAssembly workload
-        run: dotnet workload install wasm-tools
+        shell: pwsh
+        run: |
+          dotnet workload install wasm-tools
+          dotnet workload restore .\src\KnittyKitty.Uno\KnittyKitty.Uno\KnittyKitty.Uno.csproj
 
       - name: Restore Uno WebAssembly app
-        run: dotnet restore src/KnittyKitty.Uno/KnittyKitty.Uno/KnittyKitty.Uno.csproj
+        shell: pwsh
+        run: >
+          dotnet restore .\src\KnittyKitty.Uno\KnittyKitty.Uno\KnittyKitty.Uno.csproj
+          -p:EnableWindowsTargeting=true
 
       - name: Publish Uno WebAssembly app
+        shell: pwsh
         run: >
-          dotnet publish src/KnittyKitty.Uno/KnittyKitty.Uno/KnittyKitty.Uno.csproj
+          dotnet publish .\src\KnittyKitty.Uno\KnittyKitty.Uno\KnittyKitty.Uno.csproj
           --configuration Release
           --framework net10.0-browserwasm
-          --output artifacts/wasm-publish
+          -p:EnableWindowsTargeting=true
+          --output .\artifacts\wasm-publish
 
       - name: Prepare GitHub Pages folder
-        shell: bash
+        shell: pwsh
         run: |
-          mkdir -p artifacts/wasm-site
+          New-Item -ItemType Directory -Force -Path .\artifacts\wasm-site
 
-          if [ -d "artifacts/wasm-publish/wwwroot" ]; then
-            cp -a artifacts/wasm-publish/wwwroot/. artifacts/wasm-site/
-          else
-            cp -a artifacts/wasm-publish/. artifacts/wasm-site/
-          fi
+          if (Test-Path ".\artifacts\wasm-publish\wwwroot") {
+            Copy-Item ".\artifacts\wasm-publish\wwwroot\*" ".\artifacts\wasm-site" -Recurse -Force
+          }
+          else {
+            Copy-Item ".\artifacts\wasm-publish\*" ".\artifacts\wasm-site" -Recurse -Force
+          }
 
-          touch artifacts/wasm-site/.nojekyll
+          New-Item -ItemType File -Force -Path ".\artifacts\wasm-site\.nojekyll"
 
-          if [ -f "artifacts/wasm-site/index.html" ]; then
-            sed -i 's#<base href="/" />#<base href="/KnittyKitty/" />#g' artifacts/wasm-site/index.html
-            sed -i 's#<base href="/">#<base href="/KnittyKitty/">#g' artifacts/wasm-site/index.html
-            cp artifacts/wasm-site/index.html artifacts/wasm-site/404.html
-          fi
+          $indexPath = ".\artifacts\wasm-site\index.html"
+
+          if (Test-Path $indexPath) {
+            $content = Get-Content $indexPath -Raw
+            $content = $content -replace '<base href="/" />', '<base href="/KnittyKitty/" />'
+            $content = $content -replace '<base href="/">', '<base href="/KnittyKitty/">'
+            Set-Content -Path $indexPath -Value $content
+            Copy-Item $indexPath ".\artifacts\wasm-site\404.html" -Force
+          }
+          else {
+            Write-Error "index.html was not found in published WebAssembly output."
+          }
 
       - name: Create WebAssembly zip
-        shell: bash
+        shell: pwsh
         run: |
-          mkdir -p dist
-          cd artifacts/wasm-site
-          zip -r ../../dist/KnittyKitty-WebAssembly.zip .
+          New-Item -ItemType Directory -Force -Path .\dist
+          Compress-Archive `
+            -Path .\artifacts\wasm-site\* `
+            -DestinationPath .\dist\KnittyKitty-WebAssembly.zip `
+            -Force
 
       - name: Upload WebAssembly release artifact
         uses: actions/upload-artifact@v4
