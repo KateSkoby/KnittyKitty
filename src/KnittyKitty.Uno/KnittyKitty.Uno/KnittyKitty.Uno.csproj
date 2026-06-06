@@ -50,10 +50,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Data\knittykitty.db">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <EmbeddedResource Include="Data\knittykitty.db" LogicalName="KnittyKitty.Uno.Data.knittykitty.db" />
+    <None Remove="Data\knittykitty.db" />
+    <EmbeddedResource
+      Include="Data\knittykitty.db"
+      LogicalName="KnittyKitty.Uno.Data.knittykitty.db" />
+    <Content
+      Include="Data\knittykitty.db"
+      CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
