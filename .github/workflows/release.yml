@@ -42,7 +42,9 @@ jobs:
             --runtime win-x64 `
             --self-contained true `
             -p:Platform=x64 `
+            -p:RuntimeIdentifierOverride=win-x64 `
             -p:WindowsPackageType=None `
+            -p:WindowsAppSDKSelfContained=true `
             -p:PublishSingleFile=false `
             --output .\artifacts\windows
 
@@ -95,6 +97,7 @@ jobs:
             --configuration Release `
             --framework net10.0-browserwasm `
             -p:EnableWindowsTargeting=true `
+            -p:WasmShellWebAppBasePath=./ `
             --output .\artifacts\wasm-publish
 
       - name: Prepare GitHub Pages folder
@@ -115,9 +118,11 @@ jobs:
 
           if (Test-Path $indexPath) {
             $content = Get-Content $indexPath -Raw
-            $content = $content -replace '<base href="/" />', '<base href="/KnittyKitty/" />'
-            $content = $content -replace '<base href="/">', '<base href="/KnittyKitty/">'
-            Set-Content -Path $indexPath -Value $content
+
+            $content = $content -replace '<base href="/" />', '<base href="./" />'
+            $content = $content -replace '<base href="/">', '<base href="./">'
+
+            Set-Content -Path $indexPath -Value $content -Encoding UTF8
             Copy-Item $indexPath ".\artifacts\wasm-site\404.html" -Force
           }
           else {
@@ -195,15 +200,29 @@ jobs:
             echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create GitHub Release
+      - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         shell: bash
         run: |
-          gh release create "${{ steps.tag.outputs.tag }}" \
-            "release-assets/windows-release/KnittyKitty-Windows-x64.zip#Windows x64 exe version" \
-            "release-assets/wasm-release/KnittyKitty-WebAssembly.zip#Uno WebAssembly browser version" \
-            --title "KnittyKitty ${{ steps.tag.outputs.tag }}" \
-            --notes "Release contains Windows x64 executable version and Uno Platform WebAssembly browser version. Browser version is also deployed to GitHub Pages." \
-            --target "${{ github.sha }}"
+          TAG="${{ steps.tag.outputs.tag }}"
+
+          WINDOWS_ASSET="release-assets/windows-release/KnittyKitty-Windows-x64.zip"
+          WASM_ASSET="release-assets/wasm-release/KnittyKitty-WebAssembly.zip"
+
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists. Uploading assets again..."
+            gh release upload "$TAG" \
+              "$WINDOWS_ASSET#Windows x64 exe version" \
+              "$WASM_ASSET#Uno WebAssembly browser version" \
+              --clobber
+          else
+            echo "Creating release $TAG..."
+            gh release create "$TAG" \
+              "$WINDOWS_ASSET#Windows x64 exe version" \
+              "$WASM_ASSET#Uno WebAssembly browser version" \
+              --title "KnittyKitty $TAG" \
+              --notes "Release contains Windows x64 executable version and Uno Platform WebAssembly browser version. Browser version is also deployed to GitHub Pages." \
+              --target "${{ github.sha }}"
+          fi
