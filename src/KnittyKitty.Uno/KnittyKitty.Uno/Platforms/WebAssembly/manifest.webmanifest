@@ -1,0 +1,10 @@
+{
+  "background_color": "#ffffff",
+  "description": "Knitty Kitty cross-platform store app powered by Uno Platform.",
+  "display": "standalone",
+  "name": "Knitty Kitty",
+  "short_name": "Knitty Kitty",
+  "start_url": "/index.html",
+  "theme_color": "#ffffff",
+  "scope": "/"
+}

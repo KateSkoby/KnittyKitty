@@ -1,0 +1,11 @@
+<UserControl
+    x:Class="KnittyKitty.Uno.Controls.KittyLogo"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Width="64"
+    Height="64">
+
+    <Grid>
+        <Image x:Name="LogoImage" Source="Assets/WindowIcon.png" Stretch="Uniform" />
+    </Grid>
+</UserControl>
