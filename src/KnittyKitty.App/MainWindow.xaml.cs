@@ -30,8 +30,6 @@ public sealed partial class MainWindow : Window
         _windowSubclassProc = WindowSubclassProc;
 
         InitializeComponent();
-        SetWindowIcon();
-        SetWindowMinimumSize();
         Root.SizeChanged += Root_SizeChanged;
         Root.Loaded += (_, _) => ApplyAdaptiveLayout(Root.ActualWidth);
 
